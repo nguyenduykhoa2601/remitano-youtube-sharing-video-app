@@ -1,0 +1,7 @@
+uvicorn[standard]
+fastapi
+datetime
+requests
+gunicorn
+pydantic==1.10.8
+pydantic[email]

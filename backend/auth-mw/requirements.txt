@@ -1,0 +1,11 @@
+uvicorn[standard]
+fastapi
+datetime
+pytest
+gunicorn
+pydantic==1.10.8
+sqlalchemy
+psycopg2-binary
+passlib[bcrypt]
+pyjwt
+pydantic[email]

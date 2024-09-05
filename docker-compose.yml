@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+    command: gunicorn -k uvicorn.workers.UvicornWorker -c gunicorn_conf.py main:app --bind 0.0.0.0:8000
+    ports:
+      - "${API_GATEWAY_PORT}:8000"
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - HASH_ALGORITHM=${HASH_ALGORITHM}
+      - ENDPOINT_AUTH_MIDDLEWARES=http://auth-mw:${AUTH_MIDDLEWARE_PORT}
+    
+    volumes:
+      - /home/khoand8/Desktop/test/remitano-youtube-sharing-video-app/backend/api-gateway:/api-gateway
+    depends_on:
+      - auth-mw
+  auth-mw:
+    build:
+      context: ./backend/auth-mw
+    command: gunicorn -k uvicorn.workers.UvicornWorker -c gunicorn_conf.py main:app --bind 0.0.0.0:8020
+    ports:
+      - "${AUTH_MIDDLEWARE_PORT}:8020"
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - HASH_ALGORITHM=${HASH_ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      - REFRESH_TOKEN_EXPIRE_DAYS=${REFRESH_TOKEN_EXPIRE_DAYS}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+    depends_on:
+      # - kafka
+      - postgres
+      - redis
+    volumes:
+      - /home/khoand8/Desktop/test/remitano-youtube-sharing-video-app/backend/auth-mw:/auth-mw
+
+  # shared:
+  #   build: ./shared
+
+  # kafka:
+  #   image: bitnami/kafka:3.5.1
+  #   ports:
+  #     - "${KAFKA_PORT}:${KAFKA_PORT}"
+  #   environment:
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:${KAFKA_PORT}
+  #     KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_PORT}
+  #   depends_on:
+  #     - zookeeper
+
+  # zookeeper:
+  #   image: zookeeper:3.8.1
+  #   ports:
+  #     - "${ZOOKEEPER_PORT}:${ZOOKEEPER_PORT}"
+  
+  redis:
+    image: redis:7
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
